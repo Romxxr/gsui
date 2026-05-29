@@ -11,7 +11,7 @@ local CoreGui = game:GetService("CoreGui")
 
 local UI = {}
 
--- Utility: Enable Dragging for PC users
+-- Utility: Enable Smooth Dragging for PC & Mobile
 local function makeDraggable(topBar, mainFrame)
     local dragging, dragInput, dragStart, startPos
     topBar.InputBegan:Connect(function(input)
@@ -43,29 +43,28 @@ function UI:MakeWindow(config)
     config = config or {}
     local titleText = config.Title or "gaysploits"
     
-    -- Protect against duplicate instances
+    -- Destroy old instances to prevent UI stacking on re-run
     if CoreGui:FindFirstChild("gaysploits_Gui") then
         CoreGui:FindFirstChild("gaysploits_Gui"):Destroy()
     end
 
-    -- Base ScreenGui
+    -- Base ScreenGui inside protected CoreGui
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "gaysploits_Gui"
     ScreenGui.ResetOnSpawn = false
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = CoreGui
 
-    -- Main Frame (Fancy Rainbow Border Effect using UIGradient)
+    -- Main Window Frame
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 550, 0, 360)
     MainFrame.Position = UDim2.new(0.5, -275, 0.5, -180)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
     MainFrame.BorderSizePixel = 0
-    MainFrame.ClipsDescendants = false
     MainFrame.Parent = ScreenGui
 
-    -- Rainbow Border Styling
+    -- Super Fancy Rainbow Outline/Stroke
     local Stroke = Instance.new("UIStroke")
     Stroke.Thickness = 2.5
     Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -73,56 +72,57 @@ function UI:MakeWindow(config)
     
     local RainbowGradient = Instance.new("UIGradient")
     RainbowGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 100)),   -- Pink/Red
-        ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 180, 100)), -- Orange
-        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 255, 120)), -- Yellow
-        ColorSequenceKeypoint.new(0.6, Color3.fromRGB(130, 255, 130)), -- Green
-        ColorSequenceKeypoint.new(0.8, Color3.fromRGB(100, 200, 255)), -- Blue
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 120, 255))    -- Purple
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 90, 90)),    -- Coral Red
+        ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 170, 90)), -- Peach Orange
+        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 240, 100)),-- Soft Yellow
+        ColorSequenceKeypoint.new(0.6, Color3.fromRGB(100, 255, 170)),-- Mint Green
+        ColorSequenceKeypoint.new(0.8, Color3.fromRGB(90, 190, 255)), -- Sky Blue
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 110, 255))   -- Electric Violet
     })
     RainbowGradient.Parent = Stroke
 
-    -- Animate the rainbow border dynamically
+    -- Smooth Rotating Animation for the Rainbow Border
     task.spawn(function()
         local rot = 0
         while MainFrame and MainFrame.Parent do
-            rot = (rot + 1) % 360
+            rot = (rot + 1.5) % 360
             RainbowGradient.Rotation = rot
-            task.wait(0.02)
+            task.wait(0.015)
         end
     end)
 
     local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 10)
+    Corner.CornerRadius = UDim.new(0, 9)
     Corner.Parent = MainFrame
 
-    -- Top Bar / Header
+    -- Top Header Bar
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
     TopBar.Size = UDim2.new(1, 0, 0, 45)
-    TopBar.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    TopBar.BackgroundColor3 = Color3.fromRGB(16, 16, 20)
     TopBar.BorderSizePixel = 0
     TopBar.Parent = MainFrame
     
     local TopCorner = Instance.new("UICorner")
-    TopCorner.CornerRadius = UDim.new(0, 10)
+    TopCorner.CornerRadius = UDim.new(0, 9)
     TopCorner.Parent = TopBar
     
-    -- Clean sharp edges for top bar bottom section
+    -- Cover bottom rounded edges of the top bar
     local FixCover = Instance.new("Frame")
     FixCover.Size = UDim2.new(1, 0, 0, 10)
     FixCover.Position = UDim2.new(0, 0, 1, -10)
-    FixCover.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    FixCover.BackgroundColor3 = Color3.fromRGB(16, 16, 20)
     FixCover.BorderSizePixel = 0
     FixCover.Parent = TopBar
 
+    -- Title text
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, -60, 1, 0)
-    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.Position = UDim2.new(0, 16, 0, 0)
     Title.Text = titleText
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 18
+    Title.TextSize = 17
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.BackgroundTransparency = 1
     Title.Parent = TopBar
@@ -130,18 +130,18 @@ function UI:MakeWindow(config)
     -- Close Button
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-    CloseBtn.Position = UDim2.new(1, -40, 0, 7.5)
+    CloseBtn.Position = UDim2.new(1, -38, 0, 7.5)
     CloseBtn.Text = "✕"
-    CloseBtn.TextColor3 = Color3.fromRGB(150, 150, 160)
-    CloseBtn.TextSize = 16
+    CloseBtn.TextColor3 = Color3.fromRGB(140, 140, 150)
+    CloseBtn.TextSize = 15
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.BackgroundTransparency = 1
     CloseBtn.Parent = TopBar
 
-    CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 100, 100)}):Play() end)
-    CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 160)}):Play() end)
+    CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 90, 90)}):Play() end)
+    CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(140, 140, 150)}):Play() end)
     
-    -- Content Container (Canvas Scroll Frame)
+    -- Scrolling Component Canvas
     local ContentContainer = Instance.new("ScrollingFrame")
     ContentContainer.Name = "ContentContainer"
     ContentContainer.Size = UDim2.new(1, -20, 1, -65)
@@ -149,7 +149,7 @@ function UI:MakeWindow(config)
     ContentContainer.BackgroundTransparency = 1
     ContentContainer.BorderSizePixel = 0
     ContentContainer.ScrollBarThickness = 4
-    ContentContainer.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 90)
+    ContentContainer.ScrollBarImageColor3 = Color3.fromRGB(60, 60, 70)
     ContentContainer.Parent = MainFrame
 
     local ContentLayout = Instance.new("UIListLayout")
@@ -161,10 +161,9 @@ function UI:MakeWindow(config)
         ContentContainer.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 10)
     end)
 
-    -- Make it Draggable
     makeDraggable(TopBar, MainFrame)
 
-    -- Opening Animation (Scale and Fade)
+    -- Opening Elastic Tween Animation
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
     MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
@@ -173,7 +172,7 @@ function UI:MakeWindow(config)
     }):Play()
 
     CloseBtn.MouseButton1Click:Connect(function()
-        local closeTween = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        local closeTween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 0, 0, 0),
             Position = UDim2.new(0.5, 0, 0.5, 0)
         })
@@ -188,29 +187,27 @@ function UI:MakeWindow(config)
     function WindowObj:MakeSection(sectionName)
         local SectionObj = {}
 
-        -- Section Label Header
+        -- Section Header Title
         local SectionHeader = Instance.new("TextLabel")
-        SectionHeader.Size = UDim2.new(1, 0, 0, 25)
+        SectionHeader.Size = UDim2.new(1, 0, 0, 22)
         SectionHeader.Text = "  " .. string.upper(sectionName)
-        SectionHeader.TextColor3 = Color3.fromRGB(160, 160, 180)
+        SectionHeader.TextColor3 = Color3.fromRGB(130, 130, 150)
         SectionHeader.Font = Enum.Font.GothamBold
-        SectionHeader.TextSize = 12
+        SectionHeader.TextSize = 11
         SectionHeader.TextXAlignment = Enum.TextXAlignment.Left
         SectionHeader.BackgroundTransparency = 1
         SectionHeader.Parent = ContentContainer
 
-        -- Helper container to style component structures uniformly
         local function createBaseComponent(height)
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, -6, 0, height)
-            Frame.BackgroundColor3 = Color3.fromRGB(42, 42, 48)
+            Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
             Frame.BorderSizePixel = 0
             Frame.Parent = ContentContainer
             
             local C = Instance.new("UICorner")
             C.CornerRadius = UDim.new(0, 6)
             C.Parent = Frame
-            
             return Frame
         end
 
@@ -221,9 +218,9 @@ function UI:MakeWindow(config)
             Label.Size = UDim2.new(1, -20, 1, 0)
             Label.Position = UDim2.new(0, 10, 0, 0)
             Label.Text = text
-            Label.TextColor3 = Color3.fromRGB(220, 220, 225)
+            Label.TextColor3 = Color3.fromRGB(210, 210, 215)
             Label.Font = Enum.Font.Gotham
-            Label.TextSize = 14
+            Label.TextSize = 13
             Label.TextXAlignment = Enum.TextXAlignment.Left
             Label.BackgroundTransparency = 1
             Label.Parent = LabelFrame
@@ -238,7 +235,9 @@ function UI:MakeWindow(config)
             Btn.Text = "  " .. label
             Btn.TextColor3 = Color3.fromRGB(240, 240, 245)
             Btn.Font = Enum.Font.GothamMedium
-            Btn.TextSize = 14
+            Btn.TextSize = 135
+            Btn.Font = Enum.Font.GothamMedium
+            Btn.TextSize = 13
             Btn.TextXAlignment = Enum.TextXAlignment.Left
             Btn.BackgroundTransparency = 1
             Btn.Parent = ButtonFrame
@@ -247,23 +246,18 @@ function UI:MakeWindow(config)
             Arrow.Size = UDim2.new(0, 30, 1, 0)
             Arrow.Position = UDim2.new(1, -35, 0, 0)
             Arrow.Text = "➔"
-            Arrow.TextColor3 = Color3.fromRGB(120, 120, 140)
+            Arrow.TextColor3 = Color3.fromRGB(100, 100, 120)
             Arrow.Font = Enum.Font.GothamBold
-            Arrow.TextSize = 14
+            Arrow.TextSize = 13
             Arrow.BackgroundTransparency = 1
             Arrow.Parent = ButtonFrame
 
-            Btn.MouseEnter:Connect(function() 
-                TweenService:Create(ButtonFrame, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(48, 48, 55)}):Play() 
-            end)
-            Btn.MouseLeave:Connect(function() 
-                TweenService:Create(ButtonFrame, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(42, 42, 48)}):Play() 
-            end)
+            Btn.MouseEnter:Connect(function() TweenService:Create(ButtonFrame, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(36, 36, 44)}):Play() end)
+            Btn.MouseLeave:Connect(function() TweenService:Create(ButtonFrame, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 36)}):Play() end)
             
             Btn.MouseButton1Click:Connect(function()
-                -- Click Visual Flash
-                ButtonFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-                task.delay(0.1, function() ButtonFrame.BackgroundColor3 = Color3.fromRGB(48, 48, 55) end)
+                ButtonFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+                task.delay(0.08, function() ButtonFrame.BackgroundColor3 = Color3.fromRGB(36, 36, 44) end)
                 task.spawn(callback)
             end)
         end
@@ -279,16 +273,15 @@ function UI:MakeWindow(config)
             Title.Text = label
             Title.TextColor3 = Color3.fromRGB(240, 240, 245)
             Title.Font = Enum.Font.GothamMedium
-            Title.TextSize = 14
+            Title.TextSize = 13
             Title.TextXAlignment = Enum.TextXAlignment.Left
             Title.BackgroundTransparency = 1
             Title.Parent = ToggleFrame
 
-            -- Custom built stylized Switch frame
             local Switch = Instance.new("Frame")
-            Switch.Size = UDim2.new(0, 40, 0, 20)
-            Switch.Position = UDim2.new(1, -50, 0.5, -10)
-            Switch.BackgroundColor3 = state and Color3.fromRGB(120, 230, 130) or Color3.fromRGB(65, 65, 75)
+            Switch.Size = UDim2.new(0, 38, 0, 18)
+            Switch.Position = UDim2.new(1, -48, 0.5, -9)
+            Switch.BackgroundColor3 = state and Color3.fromRGB(90, 220, 120) or Color3.fromRGB(55, 55, 65)
             Switch.Parent = ToggleFrame
             
             local SC = Instance.new("UICorner")
@@ -296,8 +289,8 @@ function UI:MakeWindow(config)
             SC.Parent = Switch
 
             local Circle = Instance.new("Frame")
-            Circle.Size = UDim2.new(0, 16, 0, 16)
-            Circle.Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+            Circle.Size = UDim2.new(0, 14, 0, 14)
+            Circle.Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
             Circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             Circle.Parent = Switch
             
@@ -312,11 +305,10 @@ function UI:MakeWindow(config)
             Hitbox.Parent = ToggleFrame
 
             local function updateToggle()
-                local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-                local targetColor = state and Color3.fromRGB(120, 230, 130) or Color3.fromRGB(65, 65, 75)
-                
-                TweenService:Create(Circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = targetPos}):Play()
-                TweenService:Create(Switch, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = targetColor}):Play()
+                local targetPos = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+                local targetColor = state and Color3.fromRGB(90, 220, 120) or Color3.fromRGB(55, 55, 65)
+                TweenService:Create(Circle, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {Position = targetPos}):Play()
+                TweenService:Create(Switch, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {BackgroundColor3 = targetColor}):Play()
                 task.spawn(callback, state)
             end
 
@@ -328,34 +320,34 @@ function UI:MakeWindow(config)
 
         -- Component: Slider
         function SectionObj:MakeSlider(label, min, max, default, callback)
-            local SliderFrame = createBaseComponent(48)
+            local SliderFrame = createBaseComponent(46)
             
             local Title = Instance.new("TextLabel")
-            Title.Size = UDim2.new(1, -80, 0, 25)
+            Title.Size = UDim2.new(1, -80, 0, 24)
             Title.Position = UDim2.new(0, 10, 0, 2)
             Title.Text = label
             Title.TextColor3 = Color3.fromRGB(240, 240, 245)
             Title.Font = Enum.Font.GothamMedium
-            Title.TextSize = 14
+            Title.TextSize = 13
             Title.TextXAlignment = Enum.TextXAlignment.Left
             Title.BackgroundTransparency = 1
             Title.Parent = SliderFrame
 
             local ValueLabel = Instance.new("TextLabel")
-            ValueLabel.Size = UDim2.new(0, 60, 0, 25)
+            ValueLabel.Size = UDim2.new(0, 60, 0, 24)
             ValueLabel.Position = UDim2.new(1, -70, 0, 2)
             ValueLabel.Text = tostring(default or min)
-            ValueLabel.TextColor3 = Color3.fromRGB(180, 180, 200)
+            ValueLabel.TextColor3 = Color3.fromRGB(160, 160, 180)
             ValueLabel.Font = Enum.Font.GothamBold
-            ValueLabel.TextSize = 13
+            ValueLabel.TextSize = 12
             ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
             ValueLabel.BackgroundTransparency = 1
             ValueLabel.Parent = SliderFrame
 
             local Track = Instance.new("Frame")
-            Track.Size = UDim2.new(1, -20, 0, 6)
-            Track.Position = UDim2.new(0, 10, 0, 32)
-            Track.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+            Track.Size = UDim2.new(1, -20, 0, 5)
+            Track.Position = UDim2.new(0, 10, 0, 30)
+            Track.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
             Track.BorderSizePixel = 0
             Track.Parent = SliderFrame
             
@@ -365,7 +357,7 @@ function UI:MakeWindow(config)
 
             local Fill = Instance.new("Frame")
             Fill.Size = UDim2.new(math.clamp(((default or min) - min) / (max - min), 0, 1), 0, 1, 0)
-            Fill.BackgroundColor3 = Color3.fromRGB(140, 180, 255)
+            Fill.BackgroundColor3 = Color3.fromRGB(110, 160, 255)
             Fill.BorderSizePixel = 0
             Fill.Parent = Track
             
@@ -380,10 +372,9 @@ function UI:MakeWindow(config)
             Trigger.Parent = Track
 
             local function snapValue(percentage)
-                local val = min + (max - min) * percentage
-                val = math.round(val) -- Adjust math precision step scaling here if preferred
+                local val = math.round(min + (max - min) * percentage)
                 ValueLabel.Text = tostring(val)
-                TweenService:Create(Fill, TweenInfo.new(0.08), {Size = UDim2.new(percentage, 0, 1, 0)}):Play()
+                TweenService:Create(Fill, TweenInfo.new(0.06), {Size = UDim2.new(percentage, 0, 1, 0)}):Play()
                 task.spawn(callback, val)
             end
 
@@ -399,6 +390,7 @@ function UI:MakeWindow(config)
             UserInputService.InputChanged:Connect(function(input)
                 if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                     local relativeX = math.clamp((input.Position.X - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1)
+                    relativeX = math.clamp(relativeX, 0, 1)
                     snapValue(relativeX)
                 end
             end)
@@ -420,7 +412,7 @@ function UI:MakeWindow(config)
             Title.Text = label
             Title.TextColor3 = Color3.fromRGB(240, 240, 245)
             Title.Font = Enum.Font.GothamMedium
-            Title.TextSize = 14
+            Title.TextSize = 13
             Title.TextXAlignment = Enum.TextXAlignment.Left
             Title.BackgroundTransparency = 1
             Title.Parent = BoxFrame
@@ -428,13 +420,13 @@ function UI:MakeWindow(config)
             local InputBox = Instance.new("TextBox")
             InputBox.Size = UDim2.new(0.55, 0, 0, 26)
             InputBox.Position = UDim2.new(0.45, -10, 0.5, -13)
-            InputBox.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
+            InputBox.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
             InputBox.Text = ""
             InputBox.PlaceholderText = placeholder or "Type here..."
             InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-            InputBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 110)
+            InputBox.PlaceholderColor3 = Color3.fromRGB(90, 90, 100)
             InputBox.Font = Enum.Font.Gotham
-            InputBox.TextSize = 13
+            InputBox.TextSize = 12
             InputBox.ClipsDescendants = true
             InputBox.Parent = BoxFrame
 
@@ -452,8 +444,6 @@ function UI:MakeWindow(config)
             options = options or {}
             local Expanded = false
             local DropdownFrame = createBaseComponent(38)
-            
-            -- Keep original static size tracker
             DropdownFrame.ClipsDescendants = true
 
             local Title = Instance.new("TextLabel")
@@ -462,7 +452,7 @@ function UI:MakeWindow(config)
             Title.Text = label .. " (Select...)"
             Title.TextColor3 = Color3.fromRGB(240, 240, 245)
             Title.Font = Enum.Font.GothamMedium
-            Title.TextSize = 14
+            Title.TextSize = 13
             Title.TextXAlignment = Enum.TextXAlignment.Left
             Title.BackgroundTransparency = 1
             Title.Parent = DropdownFrame
@@ -471,9 +461,9 @@ function UI:MakeWindow(config)
             Indicator.Size = UDim2.new(0, 30, 0, 38)
             Indicator.Position = UDim2.new(1, -35, 0, 0)
             Indicator.Text = "▼"
-            Indicator.TextColor3 = Color3.fromRGB(140, 140, 150)
+            Indicator.TextColor3 = Color3.fromRGB(120, 120, 130)
             Indicator.Font = Enum.Font.GothamBold
-            Indicator.TextSize = 12
+            Indicator.TextSize = 11
             Indicator.BackgroundTransparency = 1
             Indicator.Parent = DropdownFrame
 
@@ -495,7 +485,6 @@ function UI:MakeWindow(config)
             Trigger.Parent = DropdownFrame
 
             local function refreshCanvasSize()
-                -- Dynamic canvas resize fix if dropdown container sizes change
                 local currentLayout = ContentContainer:FindFirstChildOfClass("UIListLayout")
                 if currentLayout then
                     ContentContainer.CanvasSize = UDim2.new(0, 0, 0, currentLayout.AbsoluteContentSize.Y + 10)
@@ -505,11 +494,11 @@ function UI:MakeWindow(config)
             for i, opt in ipairs(options) do
                 local OptBtn = Instance.new("TextButton")
                 OptBtn.Size = UDim2.new(1, 0, 0, 28)
-                OptBtn.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
+                OptBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
                 OptBtn.Text = "  " .. tostring(opt)
-                OptBtn.TextColor3 = Color3.fromRGB(200, 200, 205)
+                OptBtn.TextColor3 = Color3.fromRGB(190, 190, 195)
                 OptBtn.Font = Enum.Font.Gotham
-                OptBtn.TextSize = 13
+                OptBtn.TextSize = 12
                 OptBtn.TextXAlignment = Enum.TextXAlignment.Left
                 OptBtn.Parent = ItemHolder
                 
@@ -530,16 +519,15 @@ function UI:MakeWindow(config)
 
             Trigger.MouseButton1Click:Connect(function()
                 Expanded = not Expanded
-                local targetHeight = Expanded and (38 + (#options * 32)) or 38
+                local targetHeight = Expanded and (38 + (#options * 30)) or 38
                 Indicator.Text = Expanded and "▲" or "▼"
                 
                 local tween = TweenService:Create(DropdownFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = UDim2.new(1, -6, 0, targetHeight)})
                 tween:Play()
+                
                 if Expanded then
-                    -- Grow immediately along with elements layout footprint
                     refreshCanvasSize()
                 else
-                    -- Shrink canvas wrapper dynamically at animation frame hand-off
                     tween.Completed:Connect(function() refreshCanvasSize() end)
                 end
             end)
