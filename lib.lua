@@ -38,7 +38,7 @@ local T = {
     BG4          = Color3.fromRGB( 38,  35,  28),   -- hover
 
     -- gold accent palette
-    Gold         = Color3.fromRGB(212, 160,  50),   -- primary gold
+    Gold         = Color3.fromRGB(212, 160,  50),   -- primary gol
     GoldBright   = Color3.fromRGB(240, 190,  70),   -- highlight
     GoldDim      = Color3.fromRGB(140,  98,  22),   -- muted gold
     GoldGlow     = Color3.fromRGB(255, 200,  80),   -- glow / ripple
