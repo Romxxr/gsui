@@ -6,12 +6,19 @@
  ╚██████╔╝███████║    ╚██████╔╝██║
   ╚═════╝ ╚══════╝     ╚═════╝ ╚═╝
 
-  GaySploits UI Library  v2.1.0
+  GaySploits UI Library  v2.2.0
   Style  : Bunni-Hub Dark Gold
   Toggle : RightShift (slide + blur)
   Host   : https://raw.githubusercontent.com/Romxxr/gsui/refs/heads/main/lib.lua
   Target : CoreGui / LocalScript
   License: MIT
+
+  v2.2.0 — FunctionRegistry
+    Library:Register(name, fn)       store a named function
+    Library:Unregister(name)         remove it
+    Library:Run(name, ...)           call it safely, returns ok, result
+    Library:ListRegistered()         returns table of all registered names
+    MakeButton now accepts either a direct function OR a registered name string
 --]]
 
 -- ═══════════════════════════════════════════════
@@ -320,11 +327,88 @@ end
 local Library = {}
 Library.__index = Library
 
+-- ═══════════════════════════════════════════════
+--  FUNCTION REGISTRY
+--  Lets hub scripts register named callbacks up
+--  front, then wire them to buttons by name rather
+--  than needing an inline closure every time.
+--
+--  Usage:
+--    Library:Register("KillAura", function() ... end)
+--    Library:Register("ESP",      function(state) ... end)
+--
+--    section:MakeButton("Kill Aura", "KillAura")
+--    section:MakeToggle("ESP", false, "ESP")
+--
+--    Library:Run("KillAura")          -- call manually
+--    Library:Unregister("KillAura")   -- remove
+--    Library:ListRegistered()         -- { "KillAura", "ESP", ... }
+-- ═══════════════════════════════════════════════
+Library._registry = {}
+
+-- Store a function under a name.  Overwrites silently if called again
+-- with the same name, so hot-reloading scripts can re-register freely.
+function Library:Register(name, fn)
+    assert(type(name) == "string", "Register: name must be a string")
+    assert(type(fn)   == "function", "Register: fn must be a function")
+    self._registry[name] = fn
+end
+
+-- Remove a registered function.  Safe to call even if name never existed.
+function Library:Unregister(name)
+    self._registry[name] = nil
+end
+
+-- Call a registered function by name, forwarding any extra args.
+-- Returns (true, results...) on success, (false, errorMessage) on failure.
+-- Never throws — safe to call from UI callbacks without extra pcall.
+function Library:Run(name, ...)
+    local fn = self._registry[name]
+    if not fn then
+        warn("[GSUI] Run: no function registered as '" .. tostring(name) .. "'")
+        return false, "not registered"
+    end
+    local results = table.pack(pcall(fn, ...))
+    local success = table.remove(results, 1)
+    if not success then
+        warn("[GSUI] Run: '" .. name .. "' errored — " .. tostring(results[1]))
+    end
+    return success, table.unpack(results, 1, results.n - 1)
+end
+
+-- Returns a plain array of every currently registered name.
+function Library:ListRegistered()
+    local names = {}
+    for k in pairs(self._registry) do
+        names[#names + 1] = k
+    end
+    table.sort(names)
+    return names
+end
+
+-- Internal: resolve a callback argument that is either a direct function
+-- or a string name pointing into the registry.  Used by MakeButton /
+-- MakeToggle so both calling conventions work transparently.
+local function ResolveCallback(lib, cb)
+    if type(cb) == "function" then
+        return cb
+    elseif type(cb) == "string" then
+        return function(...)
+            lib:Run(cb, ...)
+        end
+    end
+    -- nil or anything else → no-op so the UI still renders without erroring
+    return function() end
+end
+
 -- ── MakeWindow ──────────────────────────────────────────────────
 function Library:MakeWindow(opts)
     opts = opts or {}
     local title    = opts.Title    or "GaySploits"
     local subtitle = opts.Subtitle or "Premium hub for your favorite games"
+
+    -- keep a reference to the library so nested closures can reach the registry
+    local lib = self
 
     -- ── window frame ──────────────────────────
     local Win = New("Frame", {
@@ -361,7 +445,6 @@ function Library:MakeWindow(opts)
         ZIndex           = Win.ZIndex + 2,
     }, Win)
     Corner(NavBar, 12)
-    -- flatten bottom corners of navbar
     New("Frame", {
         Size             = UDim2.new(1, 0, 0.5, 0),
         Position         = UDim2.new(0, 0, 0.5, 0),
@@ -369,7 +452,6 @@ function Library:MakeWindow(opts)
         BorderSizePixel  = 0,
         ZIndex           = NavBar.ZIndex,
     }, NavBar)
-    -- bottom separator
     New("Frame", {
         Size             = UDim2.new(1, 0, 0, 1),
         Position         = UDim2.new(0, 0, 1, -1),
@@ -378,7 +460,6 @@ function Library:MakeWindow(opts)
         ZIndex           = NavBar.ZIndex + 1,
     }, NavBar)
 
-    -- logo box
     local LogoBox = New("Frame", {
         Size             = UDim2.new(0, 28, 0, 28),
         Position         = UDim2.new(0, 10, 0.5, -14),
@@ -407,7 +488,6 @@ function Library:MakeWindow(opts)
         }, LogoBox)
     end
 
-    -- title label
     New("TextLabel", {
         Text               = title,
         Font               = Enum.Font.GothamBold,
@@ -420,7 +500,6 @@ function Library:MakeWindow(opts)
         ZIndex             = NavBar.ZIndex + 2,
     }, NavBar)
 
-    -- tab nav links (center)
     local NavLinks = New("Frame", {
         Name               = "NavLinks",
         Size               = UDim2.new(0, 340, 1, 0),
@@ -437,7 +516,6 @@ function Library:MakeWindow(opts)
         Padding            = UDim.new(0, 2),
     }, NavLinks)
 
-    -- mac dots
     local function MakeDot(color, xOff)
         local dot = New("Frame", {
             Size             = UDim2.new(0, 13, 0, 13),
@@ -493,7 +571,6 @@ function Library:MakeWindow(opts)
         TextXAlignment     = Enum.TextXAlignment.Left,
         ZIndex             = Hero.ZIndex + 1,
     }, Hero)
-    -- status dot
     local StatusDot = New("Frame", {
         Size             = UDim2.new(0, 8, 0, 8),
         Position         = UDim2.new(1, -18, 0.5, -4),
@@ -502,7 +579,6 @@ function Library:MakeWindow(opts)
         ZIndex           = Hero.ZIndex + 2,
     }, Hero)
     Corner(StatusDot, 999)
-    -- hero bottom line
     New("Frame", {
         Size             = UDim2.new(1, 0, 0, 1),
         Position         = UDim2.new(0, 0, 1, -1),
@@ -512,7 +588,6 @@ function Library:MakeWindow(opts)
         ZIndex           = Hero.ZIndex + 1,
     }, Hero)
 
-    -- hint
     New("TextLabel", {
         Text               = "RightShift  ·  toggle",
         Font               = Enum.Font.Gotham,
@@ -604,7 +679,7 @@ function Library:MakeWindow(opts)
     local WindowObj  = {}
     WindowObj.__index = WindowObj
 
-    local tabList   = {}   -- { name, btn, page, uline }
+    local tabList   = {}
     local activeTab = nil
 
     local function ActivateTab(tab)
@@ -622,7 +697,6 @@ function Library:MakeWindow(opts)
 
     -- ── MakeTab ────────────────────────────────
     function WindowObj:MakeTab(tabName)
-        -- scrollable page
         local page = New("ScrollingFrame", {
             Name                = "Tab_" .. tabName,
             Size                = UDim2.new(1, -8, 1, -8),
@@ -644,7 +718,6 @@ function Library:MakeWindow(opts)
             PaddingBottom = UDim.new(0, 10),
         }, page)
 
-        -- nav button
         local navBtn = New("TextButton", {
             Text               = tabName,
             Font               = Enum.Font.GothamSemibold,
@@ -658,7 +731,6 @@ function Library:MakeWindow(opts)
         }, NavLinks)
         New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, navBtn)
 
-        -- underline
         local uline = New("Frame", {
             Size             = UDim2.new(1, 0, 0, 2),
             Position         = UDim2.new(0, 0, 1, -2),
@@ -672,7 +744,6 @@ function Library:MakeWindow(opts)
         table.insert(tabList, entry)
         navBtn.MouseButton1Click:Connect(function() ActivateTab(entry) end)
 
-        -- auto-activate first
         if #tabList == 1 then ActivateTab(entry) end
 
         -- ══════════════════════════════════════
@@ -695,7 +766,6 @@ function Library:MakeWindow(opts)
             Corner(Sec, 9)
             Stroke(Sec, T.Border, 1.1)
 
-            -- header
             local SH = New("Frame", {
                 Size               = UDim2.new(1, 0, 0, 34),
                 BackgroundTransparency = 1,
@@ -729,7 +799,6 @@ function Library:MakeWindow(opts)
                 ZIndex           = Sec.ZIndex + 1,
             }, Sec)
 
-            -- element list
             local EL = New("Frame", {
                 Name               = "EL",
                 Size               = UDim2.new(1, 0, 0, 0),
@@ -746,7 +815,6 @@ function Library:MakeWindow(opts)
                 PaddingBottom = UDim.new(0, 8),
             }, EL)
 
-            -- row factory
             local function Row(h)
                 local r = New("Frame", {
                     Size               = UDim2.new(1, 0, 0, h or 34),
@@ -783,7 +851,9 @@ function Library:MakeWindow(opts)
             SectionObj.__index = SectionObj
 
             -- ── MakeButton ─────────────────────
+            -- callback: direct function  OR  registered name string
             function SectionObj:MakeButton(label, callback)
+                local fn = ResolveCallback(lib, callback)
                 local r = New("Frame", {
                     Size               = UDim2.new(1, 0, 0, 36),
                     BackgroundColor3   = T.Amber,
@@ -811,12 +881,14 @@ function Library:MakeWindow(opts)
                 }, r)
                 btn.MouseEnter:Connect(function() Tween(r, { BackgroundColor3 = T.AmberHover }, 0.15) end)
                 btn.MouseLeave:Connect(function() Tween(r, { BackgroundColor3 = T.Amber }, 0.15) end)
-                btn.MouseButton1Click:Connect(function() Ripple(r); pcall(callback) end)
+                btn.MouseButton1Click:Connect(function() Ripple(r); fn() end)
                 return SectionObj
             end
 
             -- ── MakeToggle ─────────────────────
+            -- callback: direct function(state)  OR  registered name string
             function SectionObj:MakeToggle(label, default, callback)
+                local fn    = ResolveCallback(lib, callback)
                 local state = default == true
                 local r = Row(34)
                 RowTxt(r, label)
@@ -848,16 +920,17 @@ function Library:MakeWindow(opts)
                     Tween(Knob,  {
                         Position = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
                     }, 0.2)
-                    pcall(callback, state)
+                    fn(state)
                 end)
                 return SectionObj
             end
 
             -- ── MakeSlider ─────────────────────
             function SectionObj:MakeSlider(label, min, max, default, callback)
-                min     = min     or 0
-                max     = max     or 100
-                default = math.clamp(default or min, min, max)
+                local fn    = ResolveCallback(lib, callback)
+                min         = min     or 0
+                max         = max     or 100
+                default     = math.clamp(default or min, min, max)
 
                 local r = Row(52)
                 r.Size  = UDim2.new(1, 0, 0, 52)
@@ -933,7 +1006,7 @@ function Library:MakeWindow(opts)
                     Tween(Fill,  { Size     = UDim2.new(pct, 0, 1, 0) }, 0.06)
                     Tween(Knob,  { Position = UDim2.new(pct, -7, 0.5, -7) }, 0.06)
                     ValLbl.Text = tostring(val)
-                    pcall(callback, val)
+                    fn(val)
                 end
                 TrackBg.InputBegan:Connect(function(i)
                     if i.UserInputType == Enum.UserInputType.MouseButton1
@@ -959,6 +1032,7 @@ function Library:MakeWindow(opts)
 
             -- ── MakeTextbox ────────────────────
             function SectionObj:MakeTextbox(label, placeholder, callback)
+                local fn = ResolveCallback(lib, callback)
                 local r = Row(36)
                 RowTxt(r, label, 10, 120)
                 local IF = New("Frame", {
@@ -992,14 +1066,15 @@ function Library:MakeWindow(opts)
                 Box.FocusLost:Connect(function(enter)
                     Tween(IF, { BackgroundColor3 = T.InputBg }, 0.15)
                     st.Color = T.InputBorder
-                    if enter then pcall(callback, Box.Text) end
+                    if enter then fn(Box.Text) end
                 end)
                 return SectionObj
             end
 
             -- ── MakeDropdown ───────────────────
             function SectionObj:MakeDropdown(label, options, callback)
-                options  = options or {}
+                local fn     = ResolveCallback(lib, callback)
+                options      = options or {}
                 local selected = options[1] or "Select..."
                 local open     = false
 
@@ -1092,7 +1167,7 @@ function Library:MakeWindow(opts)
                         Tween(LF, { Size = UDim2.new(1, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quart)
                         Tween(Chev, { Rotation = 0 }, 0.2)
                         task.delay(0.22, function() LF.Visible = false end)
-                        pcall(callback, opt)
+                        fn(opt)
                     end)
                 end
 
