@@ -6,11 +6,8 @@
  ╚██████╔╝███████║    ╚██████╔╝██║
   ╚═════╝ ╚══════╝     ╚═════╝ ╚═╝
 
-  GaySploits UI Library  v2.2.0
   Style  : Bunni-Hub Dark Gold
-  Toggle : RightShift (slide + blur)
-  Host   : https://raw.githubusercontent.com/Romxxr/gsui/refs/heads/main/lib.lua
-  Target : CoreGui / LocalScript
+  Toggle : RightShift
   License: MIT
 
 
